@@ -96,10 +96,11 @@ class CartServiceIntegrationTest extends AbstractIntegrationTest {
 				.unitPrice(BigDecimal.ONE)
 				.build());
 
-		Long ttlHours = redisTemplate.getExpire("cart:user-test-3", TimeUnit.HOURS);
+		Long ttlSeconds = redisTemplate.getExpire("cart:user-test-3", TimeUnit.SECONDS);
 
-		assertThat(ttlHours).isNotNull();
-		assertThat(ttlHours).isBetween(23L, 24L);
+		// CART_TTL is 24h; allow small drift (e.g. CI timing). Redis returns -1 = no expiry, -2 = no key.
+		assertThat(ttlSeconds).isNotNull().isPositive();
+		assertThat(ttlSeconds).isBetween(23L * 3600, 25L * 3600);
 	}
 
 	@Test

@@ -39,9 +39,6 @@ jobs:
 
   dependency-submission:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: postgres
     permissions:
       contents: write
       id-token: write
@@ -57,8 +54,9 @@ jobs:
           java-version: "21"
           distribution: "temurin"
 
+      # Action runs from workspace root; ensure wrapper under postgres/ is executable
       - name: Make gradlew executable
-        run: chmod +x ./gradlew
+        run: chmod +x postgres/gradlew
 
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
