@@ -1,0 +1,35 @@
+# Project Context — Redis Learning App
+
+## Stack
+- Java 21 (GraalVM 21 — SDKMAN or Winget installed)
+- Gradle 9.x with Kotlin DSL (build.gradle.kts)
+- Spring Boot 4.0.x
+- Spring Data Redis (Lettuce client)
+- Spring Cache abstraction (@EnableCaching)
+- PostgreSQL 16 via Docker
+- Redis 7 via Docker
+- Lombok for boilerplate reduction
+
+## Key Constraints
+- Windows 11 with WSL2 for Docker
+- GraalVM native compilation is NOT used in dev; only JVM mode
+- No Maven — always use Gradle tasks (./gradlew, not mvn)
+- Jackson is the serializer for Redis values (JSON, not Java serialization)
+- All entity classes must be Serializable AND have no-arg constructors for Jackson
+
+## Conventions
+- Package structure: com.redis.postgres.{model,service,repository,controller,config}
+- Redis key format: {cacheName}:{entityId} e.g. products:prod-123
+- All cache names declared in CacheConfig enum, not hardcoded strings
+- application.yml (not .properties), separate application-test.yml for test profile
+- Docker compose file at project root: docker-compose.yml
+
+## Testing
+- JUnit 5 + Mockito for unit tests
+- @SpringBootTest + Testcontainers for integration tests
+- Test profile uses embedded Redis (via Testcontainers, NOT spring-boot-starter-data-redis-test)
+
+## Do NOT
+- Do not use Java serialization for Redis values (use Jackson JSON)
+- Do not use @Autowired (use constructor injection)
+- Do not hardcode localhost — use environment variables with docker-compose
