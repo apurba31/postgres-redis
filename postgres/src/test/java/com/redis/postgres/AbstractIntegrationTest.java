@@ -13,9 +13,10 @@ import org.testcontainers.utility.DockerImageName;
  * Base class for Testcontainers-based integration tests.
  * Starts real Postgres 16-alpine and Redis 7-alpine containers.
  * Testcontainers requires Docker Desktop (or compatible Docker daemon) to be running on Windows.
+ * When Docker is unavailable, tests extending this class are skipped ({@code disabledWithoutDocker = true}).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 public abstract class AbstractIntegrationTest {
 
 	@Container
