@@ -5,7 +5,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# --- IDE / Editor ---
+### Eclipse / STS ###
 .apt_generated
 .classpath
 .factorypath
@@ -17,8 +18,8 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
+### IntelliJ IDEA / JetBrains ###
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -33,5 +34,11 @@ out/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+### VS Code / Cursor ###
 .vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db

@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.redis.postgres.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.redis.postgres.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/postgres.iml" filepath="$PROJECT_DIR$/.idea/postgres.iml" />
     </modules>
   </component>
 </project>
