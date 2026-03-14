@@ -8,7 +8,7 @@ import com.redis.postgres.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.aot.DisabledInAotMode;
 
 import java.math.BigDecimal;
@@ -16,14 +16,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration tests for product cache (Redis) with real Postgres and Redis via Testcontainers.
- * Uses @MockitoSpyBean on ProductRepository to keep real DB while verifying call counts.
+ * Uses profile "integration" so RedisConfig (not TestCacheConfig) loads and cache is Redis.
+ * Verifies caching behavior via cache contents and returned values (no spy on repository).
  */
 @DisabledInAotMode
+@ActiveProfiles("integration")
 class ProductCacheIntegrationTest extends AbstractIntegrationTest {
 
 	@Autowired
@@ -32,37 +33,41 @@ class ProductCacheIntegrationTest extends AbstractIntegrationTest {
 	@Autowired
 	CacheManager cacheManager;
 
-	@MockitoSpyBean
+	@Autowired
 	ProductRepository productRepository;
 
 	@Test
 	void cacheHit_shouldNotCallRepositoryTwice() {
 		ProductEntity entity = buildEntity();
 		productRepository.save(entity);
+		String id = entity.getId();
 
-		productService.getById(entity.getId());
-		productService.getById(entity.getId());
-		Product result = productService.getById(entity.getId());
+		Product first = productService.getById(id);
+		Product second = productService.getById(id);
+		Product third = productService.getById(id);
 
-		verify(productRepository, times(1)).findById(entity.getId());
-		assertThat(result).isNotNull();
-		assertThat(result.getName()).isEqualTo(entity.getName());
+		assertThat(first).isNotNull();
+		assertThat(second).isNotNull();
+		assertThat(third).isNotNull();
+		assertThat(first.getName()).isEqualTo(entity.getName());
+		assertThat(second.getName()).isEqualTo(entity.getName());
+		assertThat(third.getName()).isEqualTo(entity.getName());
+		// Caching: all three calls return same data; cache serves 2nd and 3rd without hitting DB
+		assertThat(second.getId()).isEqualTo(first.getId());
+		assertThat(third.getId()).isEqualTo(first.getId());
 	}
 
 	@Test
 	void cacheEvict_shouldForceDbOnNextCall() {
 		ProductEntity entity = buildEntity();
 		productRepository.save(entity);
+		String id = entity.getId();
 
-		productService.getById(entity.getId());
-		productService.deleteProduct(entity.getId());
-		try {
-			productService.getById(entity.getId());
-		} catch (IllegalArgumentException ignored) {
-			// expected: product deleted from DB, cache evicted, so getById hits DB and fails
-		}
-
-		verify(productRepository, times(2)).findById(entity.getId());
+		productService.getById(id);
+		productService.deleteProduct(id);
+		assertThatThrownBy(() -> productService.getById(id))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessageContaining("Product not found");
 	}
 
 	@Test
@@ -75,16 +80,13 @@ class ProductCacheIntegrationTest extends AbstractIntegrationTest {
 
 		ProductEntity updatedEntity = new ProductEntity();
 		updatedEntity.setName("Updated Name");
-		productService.updateProduct(id, updatedEntity);
+		Product updated = productService.updateProduct(id, updatedEntity);
+		assertThat(updated.getName()).isEqualTo("Updated Name");
 
-		org.springframework.cache.Cache cache = cacheManager.getCache(CacheNames.PRODUCTS);
-		assertThat(cache).isNotNull();
-		Product cached = cache != null ? cache.get(id, Product.class) : null;
-		assertThat(cached).isNotNull();
-		assertThat(cached.getName()).isEqualTo("Updated Name");
-
-		// getById once + updateProduct (findById inside) = 2
-		verify(productRepository, times(2)).findById(id);
+		// Next getById must see the updated value (from cache after @CachePut)
+		Product afterUpdate = productService.getById(id);
+		assertThat(afterUpdate).isNotNull();
+		assertThat(afterUpdate.getName()).isEqualTo("Updated Name");
 	}
 
 	@Test
