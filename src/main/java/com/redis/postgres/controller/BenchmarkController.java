@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @RestController
@@ -28,10 +29,10 @@ public class BenchmarkController {
 
 	private final BenchmarkService benchmarkService;
 	private final CacheManager cacheManager;
-	private final RedisTemplate<String, Object> redisTemplate;
+	private final Optional<RedisTemplate<String, Object>> redisTemplate;
 
 	public BenchmarkController(BenchmarkService benchmarkService, CacheManager cacheManager,
-			RedisTemplate<String, Object> redisTemplate) {
+			Optional<RedisTemplate<String, Object>> redisTemplate) {
 		this.benchmarkService = benchmarkService;
 		this.cacheManager = cacheManager;
 		this.redisTemplate = redisTemplate;
@@ -59,9 +60,9 @@ public class BenchmarkController {
 			var cache = cacheManager.getCache(cacheName);
 			info.put("exists", cache != null);
 
-			if (isRedis && cache != null) {
+			if (isRedis && cache != null && redisTemplate.isPresent()) {
 				RedisCacheManager rcm = (RedisCacheManager) cacheManager;
-				Set<String> keys = redisTemplate.keys(cacheName + "::*");
+				Set<String> keys = redisTemplate.get().keys(cacheName + "::*");
 				info.put("keyCount", keys != null ? keys.size() : 0);
 
 				Duration ttl = getTtlForCache(rcm, cacheName);

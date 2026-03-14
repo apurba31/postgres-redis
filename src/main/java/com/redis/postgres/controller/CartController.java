@@ -13,7 +13,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/cart/{userId}")
-@Profile("!test")
+@Profile("!test & !no-cache")
 public class CartController {
 
 	private final CartService cartService;

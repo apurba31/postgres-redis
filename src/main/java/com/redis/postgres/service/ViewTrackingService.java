@@ -8,7 +8,7 @@ import java.time.Duration;
 import java.util.Set;
 
 @Service
-@Profile("!test")
+@Profile("!test & !no-cache")
 public class ViewTrackingService {
 
 	private static final String VIEWED_KEY_PREFIX = "viewed:";

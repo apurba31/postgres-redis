@@ -27,4 +27,6 @@ public class BenchmarkResult {
 	private long totalRedisTimeMs;
 	private String conclusion;
 	private LocalDateTime ranAt;
+	/** "redis" when Redis cache is active, "none" when no-cache profile (NoOpCacheManager). */
+	private String cacheType;
 }

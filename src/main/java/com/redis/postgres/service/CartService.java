@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-@Profile("!test")
+@Profile("!test & !no-cache")
 public class CartService {
 
 	private static final String CART_KEY_PREFIX = "cart:";

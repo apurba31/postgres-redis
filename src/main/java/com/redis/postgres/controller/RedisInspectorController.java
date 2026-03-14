@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/redis/inspect")
-@Profile("!production & !test")
+@Profile("!production & !test & !no-cache")
 public class RedisInspectorController {
 
 	private final RedisTemplate<String, Object> redisTemplate;

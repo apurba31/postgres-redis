@@ -6,6 +6,7 @@ import com.redis.postgres.repository.ProductRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -82,9 +83,18 @@ public class BenchmarkService {
 		String speedupLabel = String.format("%.1fx faster", speedupFactor);
 
 		double p99Speedup = p99RedisMs > 0 ? p99DbMs / p99RedisMs : 0;
-		String conclusion = String.format(
-				"Redis served %d reads in %.1fms total vs Postgres %.1fms — %.1fx faster at p99",
-				iterations, (double) totalRedisTimeMs, (double) totalDbTimeMs, p99Speedup);
+		boolean redisActive = cacheManager instanceof RedisCacheManager;
+		String cacheType = redisActive ? "redis" : "none";
+		String conclusion;
+		if (redisActive) {
+			conclusion = String.format(
+					"Redis served %d reads in %.1fms total vs Postgres %.1fms — %.1fx faster at p99",
+					iterations, (double) totalRedisTimeMs, (double) totalDbTimeMs, p99Speedup);
+		} else {
+			conclusion = String.format(
+					"Cache disabled (no-cache profile). Both phases hit Postgres. Total %.1fms (cold) + %.1fms (warm). Difference is JVM/connection warmup, not Redis.",
+					(double) totalDbTimeMs, (double) totalRedisTimeMs);
+		}
 
 		log.info(conclusion);
 
@@ -103,6 +113,7 @@ public class BenchmarkService {
 				.totalRedisTimeMs(totalRedisTimeMs)
 				.conclusion(conclusion)
 				.ranAt(LocalDateTime.now())
+				.cacheType(cacheType)
 				.build();
 	}
 

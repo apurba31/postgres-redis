@@ -1,0 +1,8 @@
+# Profile: no-cache — run benchmarks with cache disabled (every read hits Postgres).
+# Use: --spring.profiles.active=no-cache
+spring:
+  cache:
+    type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
