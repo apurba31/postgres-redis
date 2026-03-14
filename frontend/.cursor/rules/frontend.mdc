@@ -1,0 +1,98 @@
+# Frontend — Cursor Agent Rules
+
+## Stack
+- React 18 + TypeScript + Vite 5
+- React Router v6 (createBrowserRouter, loader pattern)
+- TanStack Query v5 (useQuery, useMutation, queryClient)
+- Zustand for global state (auth store, cart store)
+- Tailwind CSS v3 + shadcn/ui components
+- Axios with interceptors (src/lib/axios.ts)
+- @react-oauth/google for Google OAuth
+
+## Backend contract
+- Spring Boot 4.0.3 running on http://localhost:8080 in dev
+- Vite proxies /api/* → http://localhost:8080 (no CORS in dev)
+- Auth: Spring Security with JWT stored in httpOnly cookie
+- OAuth2: Google login via /oauth2/authorization/google (Spring handles redirect)
+- All API base path: /api (e.g. GET /api/products/{id})
+
+## Existing API endpoints (DO NOT INVENT NEW ONES)
+# Products
+GET    /api/products/{id}
+GET    /api/products/category/{category}?page=0
+POST   /api/products
+PUT    /api/products/{id}
+DELETE /api/products/{id}
+GET    /api/products/ids
+# Cart
+POST   /api/cart/{userId}/items
+DELETE /api/cart/{userId}/items/{productId}
+GET    /api/cart/{userId}
+GET    /api/cart/{userId}/total
+DELETE /api/cart/{userId}
+POST   /api/cart/{userId}/view/{productId}
+GET    /api/cart/{userId}/viewed
+# Benchmark
+GET    /api/benchmark/run?iterations=100
+GET    /api/benchmark/cache-status
+# Auth (Spring Security handles these, not custom controllers)
+POST   /api/auth/login     (username + password)
+POST   /api/auth/logout
+GET    /api/auth/me        (returns current user from JWT)
+GET    /oauth2/authorization/google  (redirects to Google)
+
+## Code conventions
+- ALL components are functional components with TypeScript
+- NEVER use class-based components
+- NEVER use Redux or Context API for server state — use TanStack Query
+- NEVER use useState for server data — use useQuery/useMutation
+- NEVER write inline styles — always use Tailwind utility classes
+- NEVER use fetch() directly — always use the Axios instance from src/lib/axios.ts
+- Use named exports for components, default exports for pages
+- Co-locate types with their component: ProductCard.tsx + ProductCard.types.ts
+- Query keys: arrays — ['products', id], ['cart', userId], ['benchmark']
+
+## Folder structure
+src/
+  pages/          ← route-level pages (Login, Products, Cart, Benchmark, Dashboard)
+  components/     ← reusable UI components
+    auth/         ← LoginForm, OAuthButtons, ProtectedRoute
+    products/     ← ProductCard, ProductTable, ProductForm
+    cart/         ← CartDrawer, CartItem
+    benchmark/    ← BenchmarkChart, BenchmarkResult
+    layout/       ← Navbar, Sidebar, PageWrapper
+  lib/
+    axios.ts      ← Axios instance with interceptors
+    queryClient.ts ← TanStack Query client config
+  store/
+    authStore.ts  ← Zustand: { user, isAuthenticated, login, logout }
+    cartStore.ts  ← Zustand: { items, addItem, removeItem }
+  hooks/
+    useProducts.ts
+    useCart.ts
+    useBenchmark.ts
+  types/
+    api.types.ts  ← TypeScript interfaces matching Spring DTOs
+
+## Design system
+- Font: 'Bricolage Grotesque' (display) + 'DM Sans' (body)
+- Color palette: dark navy (#0F172A) + electric blue (#3B82F6) + warm amber (#F59E0B)
+- Dark mode first — bg-slate-950 base, text-slate-100
+- Tailwind dark: prefix used throughout
+- No rounded-full on rectangular elements — use rounded-lg max
+- shadcn/ui components as base — extend, do not override
+
+## Auth flow
+- On app load: call GET /api/auth/me to restore session from httpOnly cookie
+- If 401: user is not logged in, redirect to /login
+- Google OAuth: window.location.href = '/oauth2/authorization/google'
+  Spring Security handles the entire OAuth2 flow and sets the cookie
+  After success: Spring redirects to /?auth=success, React reads this and restores state
+- ProtectedRoute: wraps all authenticated routes, checks authStore.isAuthenticated
+
+## Do NOT
+- Do not store JWT in localStorage (XSS risk) — it lives in httpOnly cookie only
+- Do not call /oauth2/* via Axios — it's a full page redirect
+- Do not create API endpoints that don't exist in the backend list above
+- Do not use any CSS framework other than Tailwind
+- Do not use moment.js — use date-fns

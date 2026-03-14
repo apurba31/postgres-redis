@@ -1,0 +1,64 @@
+# Backend DTO Contract — TypeScript interfaces
+# These match the Java model classes generated in the backend prompts.
+# Cursor must use these exact shapes. Never invent fields.
+
+## Product (matches Product.java)
+interface Product {
+  id: string
+  name: string
+  price: number           // BigDecimal → number
+  category: string
+  tags: string[]
+  attributes: Record
+  inventory: {
+    stockCount: number
+    warehouseLocation: string
+    reserved: boolean
+  }
+  reviews: Array<{
+    reviewerId: string
+    rating: number        // 1-5
+    comment: string
+    reviewDate: string    // ISO datetime string
+  }>
+  lastUpdated: string
+}
+
+## CartItem (matches CartItem.java)
+interface CartItem {
+  productId: string
+  productName: string
+  quantity: number
+  unitPrice: number
+  options: Record
+}
+
+## BenchmarkResult (matches BenchmarkResult.java)
+interface BenchmarkResult {
+  iterations: number
+  testedProductId: string
+  avgDbMs: number
+  avgRedisMs: number
+  p50DbMs: number
+  p50RedisMs: number
+  p99DbMs: number
+  p99RedisMs: number
+  speedupFactor: number
+  speedupLabel: string
+  totalDbTimeMs: number
+  totalRedisTimeMs: number
+  conclusion: string
+  ranAt: string
+}
+
+## Auth
+interface User {
+  id: string
+  email: string
+  name: string
+  roles: string[]
+  provider: 'local' | 'google' | 'github'
+}
+
+interface LoginRequest { username: string; password: string }
+interface LoginResponse { user: User; message: string }
