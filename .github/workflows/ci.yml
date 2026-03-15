@@ -53,6 +53,7 @@ jobs:
             npm ci
           else
             npm install
+          fi
 
       - name: Build frontend
         working-directory: frontend
